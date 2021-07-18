@@ -1,0 +1,80 @@
+jobs:
+- pysparkJob:
+    args:
+    - dataset
+    - entity_name
+    - gcs_output_bucket
+    - materialization_gcp_project_id
+    - materialization_dataset
+    - output_parquet
+    - is_partitioned,
+    - is_full_reload,
+    - since_date
+    mainPythonFileUri: main_python_file_parameter
+  stepId: export-table-or-view-pyspark
+placement:
+  managedCluster:
+    clusterName: production-to-reservoir-cluster
+    config:
+      gceClusterConfig:
+        internalIpOnly: false
+        zoneUri: europe-west1-b
+        serviceAccount: your_service_account_name@your-gcp-project.iam.gserviceaccount.com
+      masterConfig:
+        diskConfig:
+          bootDiskSizeGb: 500
+        machineTypeUri: n1-standard-2
+      softwareConfig:
+        imageVersion: 1.5-debian10
+        properties:
+          spark:spark.jars: gs://spark-lib/bigquery/spark-bigquery-latest_2.12.jar
+      workerConfig:
+        diskConfig:
+          bootDiskSizeGb: 500
+        machineTypeUri: n1-standard-2
+        numInstances: 2
+parameters:
+- description: Python script to run
+  fields:
+  - jobs['export-table-or-view-pyspark'].pysparkJob.mainPythonFileUri
+  name: MAIN_PYTHON_FILE
+- description: Unique name of the source dataset in BigQuery
+  fields:
+  - jobs['export-table-or-view-pyspark'].pysparkJob.args[0]
+  name: DATASET
+- description: Table/view name in the source dataset in BigQuery (in DATASET)
+  fields:
+  - jobs['export-table-or-view-pyspark'].pysparkJob.args[1]
+  name: ENTITY_NAME
+- description: The output GCS bucket
+  fields:
+  - jobs['export-table-or-view-pyspark'].pysparkJob.args[2]
+  name: GCS_OUTPUT_BUCKET 
+  validation:
+    regex:
+      regexes:
+      - gs://.*
+- description: GCP Project ID of the project used for the temp data materialization
+  fields:
+  - jobs['export-table-or-view-pyspark'].pysparkJob.args[3]
+  name: MATERIALIZATION_GCP_PROJECT_ID
+- description: The BigQuery dataset (within MATERIALIZATION_GCP_PROJECT_ID) used for the temp data materialization
+  fields:
+  - jobs['export-table-or-view-pyspark'].pysparkJob.args[4]
+  name: MATERIALIZATION_DATASET
+- description: The flag to output the data as parquet (if 'Yes') or JSON (if otherwise)
+  fields:
+  - jobs['export-table-or-view-pyspark'].pysparkJob.args[5]
+  name: OUTPUT_PARQUET
+- description: The flag to output the source data table/view in a partitioned (if 'Yes') or non-partitioned way (if otherwise)
+  fields:
+  - jobs['export-table-or-view-pyspark'].pysparkJob.args[6]
+  name: PARTITIONED
+- description: The flag to do the full export of the source data table/view (if 'Yes') or not (if otherwise)
+  fields:
+  - jobs['export-table-or-view-pyspark'].pysparkJob.args[7]
+  name: FULL_RELOAD
+- description: The date to start the data upload from, in yyyy-MM-dd format (it won't take any effect if FULL_RELOAD = 'Yes')
+  fields:
+  - jobs['export-table-or-view-pyspark'].pysparkJob.args[8]
+  name: SINCE_DATE
